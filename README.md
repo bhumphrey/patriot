@@ -1,6 +1,6 @@
 # We The People
 
-A first-person browser game about defending the U.S. Capitol at dusk. A shambling crowd pours across the National Mall toward the steps: some in red caps, a few waving blue flags. Your only weapons are the founding documents and the flag.
+A first-person browser game about defending the U.S. Capitol at dusk. A shambling crowd pours across the National Mall toward the steps: some in red caps, a few waving blue flags. Behind them, the floodlit Washington Monument, the Lincoln and Jefferson Memorials, the White House, and the Smithsonian line the skyline. Your only weapons are the founding documents and the flag.
 
 **▶ Play it: https://bhumphrey.github.io/patriot/**
 
