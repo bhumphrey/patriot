@@ -35,9 +35,11 @@ On a phone, the game plays best held sideways.
 
 Waves get bigger and faster. From wave 4, **runners** appear: faster zombies in dark red, hunched further forward. You score for every zombie converted, with bonuses for dropped caps, lowered flags, and runners. Your personal best is saved in your browser.
 
-### The Horned One
+Converted zombies leave their regalia on the ground. **Walk over a dropped cap, banner, or headdress to collect it** for bonus points: 5 for a cap, 12 for a banner, 50 for the Shaman's headdress. Your running tally is under the score.
 
-Every **five minutes**, a boss comes up the Mall in a buffalo-horn headdress. The countdown is shown under the wave number. One page won't turn him back: every document hit or flag swing takes one point off his health bar. Beat him and the headdress comes off, worth 260 points. Let him reach the steps and the Republic loses 30 Integrity.
+### The Shaman
+
+Every **five minutes**, the **Shaman** comes up the Mall in a buffalo-horn headdress. The countdown is shown under the wave number. One page won't turn him back: every document hit or flag swing takes one point off his health bar. Beat him and the headdress comes off, worth 260 points, and you can collect it from the ground for 50 more. Let him reach the steps and the Republic loses 30 Integrity.
 
 ## The music
 
@@ -47,7 +49,7 @@ The soundtrack is an original march, synthesized live in the browser (no audio f
 - **Closing in:** the same tune turns minor, with darker brass and tom rolls.
 - **At the steps:** doom. The tempo drags toward 86 bpm, the brass drops an octave, and the drums become a heartbeat under timpani and a low drone that grows dissonant when things are dire.
 
-Danger is measured from how many zombies are advancing, how close the nearest one is, how much Integrity you've lost, and whether the Horned One is on the field.
+Danger is measured from how many zombies are advancing, how close the nearest one is, how much Integrity you've lost, and whether the Shaman is on the field.
 
 ## Running it locally
 

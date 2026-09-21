@@ -222,12 +222,13 @@
   <div id="crosshair"><div class="ch-t"></div><div class="ch-b"></div><div class="ch-l"></div><div class="ch-r"></div></div>
 
   <div class="panel" id="p-wave"><div class="label">Wave</div><div class="value" id="v-wave">1</div>
-    <div class="subline" id="v-boss">Horned One in 5:00</div></div>
+    <div class="subline" id="v-boss">Shaman in 5:00</div></div>
   <div class="panel" id="p-boss">
-    <div class="label">The Horned One</div>
+    <div class="label">The Shaman</div>
     <div id="bossbar"><div id="bossfill"></div></div>
   </div>
-  <div class="panel" id="p-score"><div class="label">Citizens Restored</div><div class="value" id="v-score">0</div></div>
+  <div class="panel" id="p-score"><div class="label">Citizens Restored</div><div class="value" id="v-score">0</div>
+    <div class="subline" id="v-collected">Regalia collected 0</div></div>
   <div class="panel" id="p-threat"><div class="label">On The Lawn</div><div class="value" id="v-threat">0</div></div>
 
   <div class="panel" id="p-integrity">
@@ -281,8 +282,9 @@
       Read to them. A well-thrown founding document is enough to snap a citizen out of it &mdash;
       the cap falls, the flag drops, and they wander home. When they get close,
       wave Old Glory: a few good sweeps will turn back anyone in reach.
+      Walk over the caps and banners they leave behind to collect them.
       <br><br>
-      Every five minutes the <em>Horned One</em> comes up the Mall in his buffalo headdress.
+      Every five minutes the <em>Shaman</em> comes up the Mall in his buffalo headdress.
       One page won't reach him. Keep reading until the headdress comes off.
     </p>
     <div class="keys keys-touch">
@@ -291,6 +293,7 @@
       <div><b>Throw / Swing</b>Hold the big button &middot; drag it to aim</div>
       <div><b>Weapons</b>Const. &middot; Decl. &middot; Flag &middot; &#9834; mutes music</div>
       <div><b>Best View</b>Turn your phone sideways</div>
+      <div><b>Collect</b>Walk over dropped caps &amp; banners</div>
       <div><b>Objective</b>Keep them off the steps</div>
     </div>
     <div class="keys keys-kb">
@@ -299,6 +302,7 @@
       <div><b>Throw / Swing</b>Left Click</div>
       <div><b>Weapons</b>1 Constitution &middot; 2 Declaration &middot; 3 Flag</div>
       <div><b>Mouse &middot; Music</b>Esc releases &middot; M mutes</div>
+      <div><b>Collect</b>Walk over dropped caps &amp; banners</div>
       <div><b>Objective</b>Keep them off the steps</div>
     </div>
     <button id="btn-start">Take the Oath</button>
@@ -316,6 +320,7 @@
       <div><div class="label">Citizens Restored</div><div class="value" id="g-score">0</div></div>
       <div><div class="label">Caps Dropped</div><div class="value" id="g-caps">0</div></div>
       <div><div class="label">Flags Lowered</div><div class="value" id="g-flags">0</div></div>
+      <div><div class="label">Regalia Collected</div><div class="value" id="g-collected">0</div></div>
     </div>
     <p class="lb-status" id="g-status" role="status"></p>
     <section class="lb" id="lb-over" aria-label="Leaderboard"></section>
@@ -1243,7 +1248,7 @@ function spawnZombie(wave){
 }
 
 /* ============================================================
-   THE BOSS — buffalo-horn headdress, arrives every five minutes
+   THE SHAMAN — buffalo-horn headdress, arrives every five minutes
    ============================================================ */
 var BOSS_INTERVAL = 300;          // seconds of play between appearances
 var BOSS_SCALE    = 1.75;
@@ -1374,20 +1379,39 @@ function strikeBoss(z, kind, nx, nz){
 
 /* ---------- dropped regalia ---------- */
 var drops = [];
-function dropItem(mesh, worldPos, worldQuat, outwardDir){
+var PICKUPS = {
+  cap:       { points:5,  label:"CAP COLLECTED",       color:"#ff9d9d" },
+  flag:      { points:12, label:"BANNER COLLECTED",    color:"#8fb4ff" },
+  headdress: { points:50, label:"HEADDRESS COLLECTED", color:"#f0c36a" }
+};
+var PICKUP_REACH = 2.2;          // metres: walk over it to pick it up
+
+function dropItem(mesh, worldPos, worldQuat, outwardDir, kind){
   scene.attach(mesh);
   mesh.position.copy(worldPos);
   if (worldQuat) mesh.quaternion.copy(worldQuat);
   drops.push({
     mesh: mesh,
+    kind: kind || "cap",
     vel: new THREE.Vector3(outwardDir.x*rand(1,2.6), rand(3.4,5.6), outwardDir.z*rand(1,2.6)),
     spin: new THREE.Vector3(rand(-7,7), rand(-7,7), rand(-7,7)),
-    grounded:false, life:0
+    grounded:false, life:0, taking:0, baseScale:mesh.scale.x || 1
   });
-  if (drops.length > 70){
+  if (drops.length > 90){
     var old = drops.shift();
     scene.remove(old.mesh);
   }
+}
+
+function collect(d){
+  var info = PICKUPS[d.kind] || PICKUPS.cap;
+  d.taking = 0.0001;                       // starts the pick-up flourish
+  game.score += info.points;
+  game.collected++;
+  _v1.copy(d.mesh.position); _v1.y += 1.4;
+  popup("+" + info.points + "  " + info.label, _v1, info.color);
+  sfx.pickup();
+  updateHUD();
 }
 
 /* ============================================================
@@ -1520,6 +1544,7 @@ var sfx = (function(){
   return {
     init: init,
     throwDoc: function(){ noise(0.22, 2400, 0.9, 0.22, "highpass"); tone(320, 0.12, 0.05, "triangle", 620); },
+    pickup: function(){ tone(660, 0.1, 0.09, "triangle", 990); tone(990, 0.14, 0.05, "sine", 1320); },
     swap: function(){ noise(0.09, 3200, 0.9, 0.10, "highpass"); tone(520, 0.07, 0.04, "triangle", 760); },
     bossRoar: function(){
       tone(68, 1.6, 0.26, "sawtooth", 42); tone(102, 1.3, 0.12, "square", 58);
@@ -2031,24 +2056,26 @@ var game = {
   groanTimer: 0,
   bossTimer: 300,
   bossCount: 0,
-  bossesTurned: 0
+  bossesTurned: 0,
+  collected: 0
 };
 
 
 function updateHUD(){
   $("v-wave").textContent = game.wave;
   $("v-score").textContent = game.score;
+  $("v-collected").textContent = "Regalia collected " + game.collected;
   var threat = 0;
   for (var i=0;i<zombiePool.length;i++) if (zombiePool[i].active && zombiePool[i].state === "advance") threat++;
   $("v-threat").textContent = threat;
 
   var vb = $("v-boss");
   if (boss && boss.active && boss.state === "advance"){
-    vb.textContent = "The Horned One is here";
+    vb.textContent = "The Shaman is here";
     vb.classList.add("hot");
   } else {
     var secs = Math.max(0, Math.ceil(game.bossTimer));
-    vb.textContent = "Horned One in " + Math.floor(secs/60) + ":" + ("0" + (secs%60)).slice(-2);
+    vb.textContent = "Shaman in " + Math.floor(secs/60) + ":" + ("0" + (secs%60)).slice(-2);
     vb.classList.toggle("hot", secs <= 15);
   }
 
@@ -2073,7 +2100,7 @@ function showBanner(){
 
 function showBossBanner(){
   $("bnum").textContent = "Five minutes have passed";
-  $("btitle").textContent = "THE HORNED ONE";
+  $("btitle").textContent = "THE SHAMAN";
   $("bquote").innerHTML = "&ldquo;A long train of abuses and usurpations&hellip;&rdquo; &mdash; one page won't reach him. Keep reading.";
   var b = $("banner");
   b.classList.remove("show");
@@ -2111,6 +2138,7 @@ function endGame(){
   $("g-score").textContent = game.score;
   $("g-caps").textContent  = game.caps;
   $("g-flags").textContent = game.flags;
+  $("g-collected").textContent = game.collected;
   $("g-quote").innerHTML   = pick(QUOTES);
   submitScore();
   music.stop();
@@ -2282,7 +2310,7 @@ function resetGame(){
   game.state = "playing";
   game.wave = 0; game.score = 0; game.caps = 0; game.flags = 0;
   game.integrity = 100; game.toSpawn = 0; game.intermission = 0;
-  game.bossTimer = BOSS_INTERVAL; game.bossCount = 0; game.bossesTurned = 0;
+  game.bossTimer = BOSS_INTERVAL; game.bossCount = 0; game.bossesTurned = 0; game.collected = 0;
   $("p-boss").classList.remove("show");
 
   player.pos.set(0, 1.72, -6);
@@ -2324,7 +2352,7 @@ function pacify(z){
   if (z.hasFlag){
     z.flag.getWorldPosition(_v1);
     z.flag.getWorldQuaternion(_q1);
-    dropItem(z.flag, _v1, _q1, away);
+    dropItem(z.flag, _v1, _q1, away, "flag");
     z.hasFlag = false;
     game.flags++;
     gained += 15;
@@ -2335,7 +2363,7 @@ function pacify(z){
   if (z.hasCap){
     z.cap.getWorldPosition(_v1);
     z.cap.getWorldQuaternion(_q1);
-    dropItem(z.cap, _v1, _q1, away);
+    dropItem(z.cap, _v1, _q1, away, "cap");
     z.hasCap = false;
     game.caps++;
     gained += 6;
@@ -2346,7 +2374,7 @@ function pacify(z){
   if (z.isBoss){
     z.headdress.getWorldPosition(_v1);
     z.headdress.getWorldQuaternion(_q1);
-    dropItem(z.headdress, _v1, _q1, away);
+    dropItem(z.headdress, _v1, _q1, away, "headdress");
     // it's a big hat: scale it back up to world size once it's off his head
     z.headdress.scale.setScalar(BOSS_SCALE);
     game.bossesTurned++;
@@ -2453,7 +2481,7 @@ function updatePlayer(dt){
 }
 
 function updateWaves(dt){
-  // the Horned One keeps his own clock, independent of the waves
+  // the Shaman keeps his own clock, independent of the waves
   game.bossTimer -= dt;
   if (game.bossTimer <= 0 && !(boss && boss.active)){
     spawnBoss();
@@ -2621,10 +2649,33 @@ function updateProjectiles(dt){
 }
 
 function updateDrops(dt){
-  for (var i=0;i<drops.length;i++){
+  for (var i=drops.length-1; i>=0; i--){
     var d = drops[i];
     d.life += dt;
-    if (d.grounded) continue;
+
+    // being picked up: spin up toward the player and wink out
+    if (d.taking > 0){
+      d.taking += dt * 3.2;
+      d.mesh.position.y += dt * 2.6;
+      d.mesh.rotation.y += dt * 9;
+      var k = Math.max(0, 1 - d.taking);
+      d.mesh.scale.setScalar(d.baseScale * k);
+      if (d.taking >= 1){
+        scene.remove(d.mesh);
+        d.mesh.scale.setScalar(d.baseScale);
+        drops.splice(i, 1);
+      }
+      continue;
+    }
+
+    if (d.grounded){
+      // rest a moment so it isn't hoovered up mid-bounce, then it's yours for the taking
+      if (game.state === "playing" && d.life > 0.45){
+        var dx = d.mesh.position.x - player.pos.x, dz = d.mesh.position.z - player.pos.z;
+        if (dx*dx + dz*dz < PICKUP_REACH * PICKUP_REACH) collect(d);
+      }
+      continue;
+    }
     d.vel.y -= 16 * dt;
     d.mesh.position.addScaledVector(d.vel, dt);
     d.mesh.rotation.x += d.spin.x * dt;
@@ -2634,6 +2685,7 @@ function updateDrops(dt){
       d.mesh.position.y = 0.09;
       d.mesh.rotation.set(-Math.PI/2 + rand(-0.3,0.3), rand(0,TAU), rand(-0.3,0.3));
       d.grounded = true;
+      d.life = 0;                         // the settle timer starts where it lands
     }
   }
 }
