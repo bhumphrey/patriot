@@ -37,6 +37,8 @@ Waves get bigger and faster. From wave 4, **runners** appear: faster zombies in 
 
 Converted zombies leave their regalia on the ground. **Walk over a dropped cap, banner, or headdress to collect it** for bonus points: 5 for a cap, 12 for a banner, 50 for the Shaman's headdress. Your running tally is under the score.
 
+Regalia doesn't lie there forever. A drop lasts **26 seconds in wave 1 and 2 seconds less every wave**, down to a floor of 7, and it blinks and shrinks before it goes. Later waves make you choose between chasing the regalia and holding the line.
+
 ### The Shaman
 
 Every **five minutes**, the **Shaman** comes up the Mall in a buffalo-horn headdress. The countdown is shown under the wave number. One page won't turn him back: every document hit or flag swing takes one point off his health bar. Beat him and the headdress comes off, worth 260 points, and you can collect it from the ground for 50 more. Let him reach the steps and the Republic loses 30 Integrity.

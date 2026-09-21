@@ -282,7 +282,8 @@
       Read to them. A well-thrown founding document is enough to snap a citizen out of it &mdash;
       the cap falls, the flag drops, and they wander home. When they get close,
       wave Old Glory: a few good sweeps will turn back anyone in reach.
-      Walk over the caps and banners they leave behind to collect them.
+      Walk over the caps and banners they leave behind to collect them &mdash; but
+      they don't lie there long, and the clean-up gets quicker every wave.
       <br><br>
       Every five minutes the <em>Shaman</em> comes up the Mall in his buffalo headdress.
       One page won't reach him. Keep reading until the headdress comes off.
@@ -293,7 +294,7 @@
       <div><b>Throw / Swing</b>Hold the big button &middot; drag it to aim</div>
       <div><b>Weapons</b>Const. &middot; Decl. &middot; Flag &middot; &#9834; mutes music</div>
       <div><b>Best View</b>Turn your phone sideways</div>
-      <div><b>Collect</b>Walk over dropped caps &amp; banners</div>
+      <div><b>Collect</b>Walk over dropped caps &amp; banners before they're cleared</div>
       <div><b>Objective</b>Keep them off the steps</div>
     </div>
     <div class="keys keys-kb">
@@ -302,7 +303,7 @@
       <div><b>Throw / Swing</b>Left Click</div>
       <div><b>Weapons</b>1 Constitution &middot; 2 Declaration &middot; 3 Flag</div>
       <div><b>Mouse &middot; Music</b>Esc releases &middot; M mutes</div>
-      <div><b>Collect</b>Walk over dropped caps &amp; banners</div>
+      <div><b>Collect</b>Walk over dropped caps &amp; banners before they're cleared</div>
       <div><b>Objective</b>Keep them off the steps</div>
     </div>
     <button id="btn-start">Take the Oath</button>
@@ -1386,6 +1387,13 @@ var PICKUPS = {
 };
 var PICKUP_REACH = 2.2;          // metres: walk over it to pick it up
 
+// How long a dropped item waits to be collected. Generous in wave 1,
+// tighter every wave after, so later waves force a decision: chase the
+// regalia, or hold the line.
+function dropLifetime(){
+  return clamp(26 - (game.wave - 1) * 2, 7, 26);
+}
+
 function dropItem(mesh, worldPos, worldQuat, outwardDir, kind){
   scene.attach(mesh);
   mesh.position.copy(worldPos);
@@ -1395,7 +1403,7 @@ function dropItem(mesh, worldPos, worldQuat, outwardDir, kind){
     kind: kind || "cap",
     vel: new THREE.Vector3(outwardDir.x*rand(1,2.6), rand(3.4,5.6), outwardDir.z*rand(1,2.6)),
     spin: new THREE.Vector3(rand(-7,7), rand(-7,7), rand(-7,7)),
-    grounded:false, life:0, taking:0, baseScale:mesh.scale.x || 1
+    grounded:false, life:0, taking:0, baseScale:mesh.scale.x || 1, ttl:dropLifetime()
   });
   if (drops.length > 90){
     var old = drops.shift();
@@ -1406,6 +1414,7 @@ function dropItem(mesh, worldPos, worldQuat, outwardDir, kind){
 function collect(d){
   var info = PICKUPS[d.kind] || PICKUPS.cap;
   d.taking = 0.0001;                       // starts the pick-up flourish
+  d.mesh.visible = true;                   // in case it was mid-blink
   game.score += info.points;
   game.collected++;
   _v1.copy(d.mesh.position); _v1.y += 1.4;
@@ -2662,6 +2671,7 @@ function updateDrops(dt){
       d.mesh.scale.setScalar(d.baseScale * k);
       if (d.taking >= 1){
         scene.remove(d.mesh);
+        d.mesh.visible = true;
         d.mesh.scale.setScalar(d.baseScale);
         drops.splice(i, 1);
       }
@@ -2669,6 +2679,21 @@ function updateDrops(dt){
     }
 
     if (d.grounded){
+      // gone: someone tidied it away
+      if (d.life > d.ttl){
+        scene.remove(d.mesh);
+        d.mesh.visible = true;
+        d.mesh.scale.setScalar(d.baseScale);
+        drops.splice(i, 1);
+        continue;
+      }
+      // last few seconds: blink and shrink so you can see it going
+      var warn = Math.min(3.5, d.ttl * 0.35);
+      if (d.life > d.ttl - warn){
+        var f = (d.life - (d.ttl - warn)) / warn;
+        d.mesh.visible = Math.floor(d.life * (5 + f * 10)) % 2 === 0;
+        d.mesh.scale.setScalar(d.baseScale * (1 - 0.4 * f));
+      }
       // rest a moment so it isn't hoovered up mid-bounce, then it's yours for the taking
       if (game.state === "playing" && d.life > 0.45){
         var dx = d.mesh.position.x - player.pos.x, dz = d.mesh.position.z - player.pos.z;
